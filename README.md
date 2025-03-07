@@ -16,6 +16,40 @@
   <a href="#license">License</a>
 </p>
 
+Screenshots
+
+![image](https://github.com/user-attachments/assets/e3c2984f-7853-48cd-863a-f0e89c32cfd9)
+
+![image](https://github.com/user-attachments/assets/faa2add6-298d-40d8-871f-55d8482f6721)
+
+![image](https://github.com/user-attachments/assets/cfc45f39-49bb-45ee-b6be-562a084dc7df)
+
+![image](https://github.com/user-attachments/assets/3e148b77-ff44-44cd-aaf2-2bb5ca80e09a)
+
+![image](https://github.com/user-attachments/assets/75521499-3679-47ab-9301-ff5245011981)
+
+![image](https://github.com/user-attachments/assets/1e87a2df-9f6a-4e82-8a8b-7351d9774c5a)
+
+![image](https://github.com/user-attachments/assets/aa9a2804-3ea7-4fa3-83c3-6e0e43e88f00)
+
+![image](https://github.com/user-attachments/assets/eb2d7734-d361-40d2-bc13-9f3cc7ac57d8)
+
+![image](https://github.com/user-attachments/assets/65b9d81e-df67-40c8-a719-0d39744eb8cf)
+
+![image](https://github.com/user-attachments/assets/dc254354-73ea-4d42-a97c-7e0314d1fc38)
+
+![image](https://github.com/user-attachments/assets/fb25b7db-90a5-4722-bc21-d3de27737bf9)
+
+
+Video
+
+
+
+https://github.com/user-attachments/assets/ef477fb6-0b0a-40ca-ba26-900d31be2d79
+
+
+
+
 ## Introduction 🚀
 
 Welcome to **SwiftBank**, your personal transaction partner! This powerful and comprehensive admin dashboard template built with Bootstrap 5 and Laravel is designed to help you manage your finances efficiently. With features like real-time balance tracking, transaction history, and insightful analytics, SwiftBank provides a user-friendly experience for managing your financial activities.
