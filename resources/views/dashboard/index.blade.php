@@ -131,6 +131,9 @@
 @endsection
 
 @section('scripts')
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
     // Money Flow Chart
     const moneyFlowCtx = document.getElementById('moneyFlowChart').getContext('2d');

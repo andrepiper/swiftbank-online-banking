@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Beneficiary;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class BeneficiarySeeder extends Seeder
@@ -14,20 +13,20 @@ class BeneficiarySeeder extends Seeder
      */
     public function run(): void
     {
-        $users = User::all();
+        $users = DB::table('users')->get();
 
         // Common banks
         $banks = [
-            'Chase Bank' => '021000021',
-            'Bank of America' => '026009593',
-            'Wells Fargo' => '121000248',
-            'Citibank' => '021000089',
-            'US Bank' => '123103729',
-            'PNC Bank' => '043000096',
-            'TD Bank' => '031201360',
-            'Capital One' => '056073502',
-            'HSBC Bank' => '022000020',
-            'Truist Bank' => '061000104',
+            'Chase Bank' => ['code' => 'CHASUS33', 'routing' => '021000021', 'swift' => 'CHASUS33'],
+            'Bank of America' => ['code' => 'BOFAUS3N', 'routing' => '026009593', 'swift' => 'BOFAUS3N'],
+            'Wells Fargo' => ['code' => 'WFBIUS6S', 'routing' => '121000248', 'swift' => 'WFBIUS6S'],
+            'Citibank' => ['code' => 'CITIUS33', 'routing' => '021000089', 'swift' => 'CITIUS33'],
+            'US Bank' => ['code' => 'USBKUS44', 'routing' => '123103729', 'swift' => 'USBKUS44'],
+            'PNC Bank' => ['code' => 'PNCCUS33', 'routing' => '043000096', 'swift' => 'PNCCUS33'],
+            'TD Bank' => ['code' => 'NRTHUS33', 'routing' => '031201360', 'swift' => 'NRTHUS33'],
+            'Capital One' => ['code' => 'CAFOUS31', 'routing' => '056073502', 'swift' => 'CAFOUS31'],
+            'HSBC Bank' => ['code' => 'MRMDUS33', 'routing' => '022000020', 'swift' => 'MRMDUS33'],
+            'Truist Bank' => ['code' => 'BRBTUS33', 'routing' => '061000104', 'swift' => 'BRBTUS33'],
         ];
 
         // Each user gets 2-5 beneficiaries
@@ -37,26 +36,32 @@ class BeneficiarySeeder extends Seeder
             for ($i = 0; $i < $numBeneficiaries; $i++) {
                 // Select a random bank
                 $bankName = array_rand($banks);
-                $routingNumber = $banks[$bankName];
+                $bankInfo = $banks[$bankName];
 
                 // Generate a random account number
                 $accountNumber = $this->generateAccountNumber();
 
+                // Determine transfer type
+                $transferType = $this->getRandomTransferType();
+
+                // Generate IBAN for international transfers
+                $iban = ($transferType === 'INTERNATIONAL') ? $this->generateIBAN() : null;
+
                 // Create beneficiary
-                Beneficiary::create([
+                DB::table('beneficiaries')->insert([
                     'user_id' => $user->id,
                     'name' => $this->generateBeneficiaryName(),
                     'account_number' => $accountNumber,
-                    'routing_number' => $routingNumber,
                     'bank_name' => $bankName,
-                    'account_type' => $this->getRandomAccountType(),
-                    'email' => $this->generateEmail(),
-                    'phone_number' => $this->generatePhoneNumber(),
+                    'bank_code' => $bankInfo['code'],
+                    'routing_number' => $bankInfo['routing'],
+                    'swift_code' => $bankInfo['swift'],
+                    'iban' => $iban,
                     'address' => $this->generateAddress(),
-                    'relationship' => $this->getRandomRelationship(),
-                    'status' => 'active',
-                    'is_favorite' => rand(0, 10) > 8,
-                    'notes' => rand(0, 10) > 7 ? $this->generateNotes() : null,
+                    'country' => 'USA',
+                    'currency' => 'USD',
+                    'transfer_type' => $transferType,
+                    'is_favorite' => rand(0, 10) > 8 ? 1 : 0,
                     'created_at' => now()->subDays(rand(1, 180)),
                     'updated_at' => now(),
                 ]);
@@ -95,29 +100,39 @@ class BeneficiarySeeder extends Seeder
     }
 
     /**
-     * Get a random account type
+     * Get a random transfer type
      */
-    private function getRandomAccountType(): string
+    private function getRandomTransferType(): string
     {
-        $types = ['checking', 'savings', 'business'];
-        return $types[array_rand($types)];
+        $types = ['INTERNAL', 'DOMESTIC', 'INTERNATIONAL'];
+        $weights = [20, 60, 20]; // 20% internal, 60% domestic, 20% international
+
+        $rand = rand(1, 100);
+        $cumulative = 0;
+
+        foreach ($types as $index => $type) {
+            $cumulative += $weights[$index];
+            if ($rand <= $cumulative) {
+                return $type;
+            }
+        }
+
+        return 'DOMESTIC'; // Default fallback
     }
 
     /**
-     * Generate a random email
+     * Generate a random IBAN
      */
-    private function generateEmail(): string
+    private function generateIBAN(): string
     {
-        $domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'aol.com', 'icloud.com'];
-        return strtolower(Str::random(8)) . '@' . $domains[array_rand($domains)];
-    }
+        $countries = ['DE', 'FR', 'GB', 'ES', 'IT', 'NL', 'BE', 'CH'];
+        $country = $countries[array_rand($countries)];
 
-    /**
-     * Generate a random phone number
-     */
-    private function generatePhoneNumber(): string
-    {
-        return '+1' . rand(200, 999) . rand(100, 999) . rand(1000, 9999);
+        $checkDigits = str_pad(rand(0, 99), 2, '0', STR_PAD_LEFT);
+        $bankCode = strtoupper(Str::random(4));
+        $accountNumber = strtoupper(Str::random(16));
+
+        return $country . $checkDigits . $bankCode . $accountNumber;
     }
 
     /**
@@ -134,35 +149,5 @@ class BeneficiarySeeder extends Seeder
         $index = array_rand($streetNumbers);
 
         return $streetNumbers[$index] . ' ' . $streetNames[$index] . ', ' . $cities[$index] . ', ' . $states[$index] . ' ' . $zipCodes[$index];
-    }
-
-    /**
-     * Get a random relationship
-     */
-    private function getRandomRelationship(): string
-    {
-        $relationships = ['family', 'friend', 'business', 'other'];
-        return $relationships[array_rand($relationships)];
-    }
-
-    /**
-     * Generate random notes
-     */
-    private function generateNotes(): string
-    {
-        $notes = [
-            'Monthly rent payment',
-            'Business partner',
-            'Shared expenses',
-            'Family member',
-            'Regular transfers',
-            'Emergency contact',
-            'Investment account',
-            'Joint venture',
-            'Loan repayment',
-            'Subscription payment',
-        ];
-
-        return $notes[array_rand($notes)];
     }
 }

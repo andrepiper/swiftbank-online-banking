@@ -2,8 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\TransactionGroup;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class TransactionGroupSeeder extends Seeder
 {
@@ -14,10 +15,11 @@ class TransactionGroupSeeder extends Seeder
     {
         $groups = [
             [
+                'id' => Str::uuid()->toString(),
                 'name' => 'Deposits',
                 'description' => 'All deposit transactions',
-                'type' => 'deposit',
-                'status' => 'active',
+                'type' => 'DEPOSIT',
+                'status' => 'ACTIVE',
                 'metadata' => json_encode([
                     'icon' => 'bx-arrow-down',
                     'color' => '#28a745',
@@ -27,10 +29,11 @@ class TransactionGroupSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'id' => Str::uuid()->toString(),
                 'name' => 'Withdrawals',
                 'description' => 'All withdrawal transactions',
-                'type' => 'withdrawal',
-                'status' => 'active',
+                'type' => 'WITHDRAWAL',
+                'status' => 'ACTIVE',
                 'metadata' => json_encode([
                     'icon' => 'bx-arrow-up',
                     'color' => '#dc3545',
@@ -40,10 +43,11 @@ class TransactionGroupSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'id' => Str::uuid()->toString(),
                 'name' => 'Transfers',
                 'description' => 'All transfer transactions',
-                'type' => 'transfer',
-                'status' => 'active',
+                'type' => 'TRANSFER',
+                'status' => 'ACTIVE',
                 'metadata' => json_encode([
                     'icon' => 'bx-transfer',
                     'color' => '#17a2b8',
@@ -53,10 +57,11 @@ class TransactionGroupSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'id' => Str::uuid()->toString(),
                 'name' => 'Payments',
                 'description' => 'All payment transactions',
-                'type' => 'payment',
-                'status' => 'active',
+                'type' => 'PAYMENT',
+                'status' => 'ACTIVE',
                 'metadata' => json_encode([
                     'icon' => 'bx-credit-card',
                     'color' => '#6c757d',
@@ -66,10 +71,11 @@ class TransactionGroupSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'id' => Str::uuid()->toString(),
                 'name' => 'Fees',
                 'description' => 'All fee transactions',
-                'type' => 'fee',
-                'status' => 'active',
+                'type' => 'FEE',
+                'status' => 'ACTIVE',
                 'metadata' => json_encode([
                     'icon' => 'bx-money-withdraw',
                     'color' => '#dc3545',
@@ -79,10 +85,11 @@ class TransactionGroupSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'id' => Str::uuid()->toString(),
                 'name' => 'Interest',
                 'description' => 'All interest transactions',
-                'type' => 'interest',
-                'status' => 'active',
+                'type' => 'INTEREST',
+                'status' => 'ACTIVE',
                 'metadata' => json_encode([
                     'icon' => 'bx-line-chart',
                     'color' => '#28a745',
@@ -92,10 +99,11 @@ class TransactionGroupSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'id' => Str::uuid()->toString(),
                 'name' => 'Direct Deposits',
                 'description' => 'Automatic deposits like salary and benefits',
-                'type' => 'deposit',
-                'status' => 'active',
+                'type' => 'DEPOSIT',
+                'status' => 'ACTIVE',
                 'metadata' => json_encode([
                     'icon' => 'bx-briefcase',
                     'color' => '#28a745',
@@ -106,10 +114,11 @@ class TransactionGroupSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'id' => Str::uuid()->toString(),
                 'name' => 'Automatic Payments',
                 'description' => 'Recurring automatic payments',
-                'type' => 'payment',
-                'status' => 'active',
+                'type' => 'PAYMENT',
+                'status' => 'ACTIVE',
                 'metadata' => json_encode([
                     'icon' => 'bx-calendar',
                     'color' => '#6c757d',
@@ -120,10 +129,11 @@ class TransactionGroupSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'id' => Str::uuid()->toString(),
                 'name' => 'ATM Transactions',
                 'description' => 'ATM withdrawals and deposits',
-                'type' => 'withdrawal',
-                'status' => 'active',
+                'type' => 'WITHDRAWAL',
+                'status' => 'ACTIVE',
                 'metadata' => json_encode([
                     'icon' => 'bx-credit-card-front',
                     'color' => '#dc3545',
@@ -134,10 +144,11 @@ class TransactionGroupSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'id' => Str::uuid()->toString(),
                 'name' => 'International Transfers',
                 'description' => 'Transfers to and from international accounts',
-                'type' => 'transfer',
-                'status' => 'active',
+                'type' => 'TRANSFER',
+                'status' => 'ACTIVE',
                 'metadata' => json_encode([
                     'icon' => 'bx-globe',
                     'color' => '#17a2b8',
@@ -147,10 +158,38 @@ class TransactionGroupSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            [
+                'id' => Str::uuid()->toString(),
+                'name' => 'Investments',
+                'description' => 'Investment-related transactions',
+                'type' => 'INVESTMENT',
+                'status' => 'ACTIVE',
+                'metadata' => json_encode([
+                    'icon' => 'bx-trending-up',
+                    'color' => '#28a745',
+                    'priority' => 11,
+                ]),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => Str::uuid()->toString(),
+                'name' => 'Loan Payments',
+                'description' => 'Loan and mortgage payments',
+                'type' => 'PAYMENT',
+                'status' => 'ACTIVE',
+                'metadata' => json_encode([
+                    'icon' => 'bx-home',
+                    'color' => '#6c757d',
+                    'priority' => 12,
+                ]),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ];
 
         foreach ($groups as $group) {
-            TransactionGroup::create($group);
+            DB::table('transaction_groups')->insert($group);
         }
     }
 }

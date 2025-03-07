@@ -2,11 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Account;
-use App\Models\Transaction;
-use App\Models\TransactionCategory;
-use App\Models\TransactionGroup;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class TransactionSeeder extends Seeder
@@ -16,12 +13,16 @@ class TransactionSeeder extends Seeder
      */
     public function run(): void
     {
-        $accounts = Account::all();
-        $transactionGroups = TransactionGroup::all();
-        $transactionCategories = TransactionCategory::all();
+        $users = DB::table('users')->get();
+        $accounts = DB::table('accounts')->get();
+        $transactionGroups = DB::table('transaction_groups')->get();
+        $transactionCategories = DB::table('transaction_categories')->get();
 
         // Generate transactions for each account
         foreach ($accounts as $account) {
+            // Get user
+            $user = $users->where('id', $account->user_id)->first();
+
             // Number of transactions to generate for this account
             $numTransactions = rand(10, 30);
 
@@ -34,20 +35,15 @@ class TransactionSeeder extends Seeder
                 $transactionType = $this->getRandomTransactionType();
 
                 // Find appropriate group
-                $group = $transactionGroups->where('type', $transactionType)->random();
+                $group = $transactionGroups->where('type', strtoupper($transactionType))->random();
 
-                // Find appropriate category based on transaction type
-                $categoryType = ($transactionType === 'deposit') ? 'credit' :
-                               (($transactionType === 'withdrawal' || $transactionType === 'payment' || $transactionType === 'fee') ? 'debit' : 'transfer');
-
-                $category = $transactionCategories->where('type', $categoryType)->random();
+                // Determine entry type based on transaction type
+                $entryType = ($transactionType === 'deposit' || $transactionType === 'interest') ? 'credit' : 'debit';
 
                 // Generate amount
                 $amount = $this->getRandomAmount($transactionType);
 
-                // Calculate entry type and balance after
-                $entryType = ($transactionType === 'deposit' || $transactionType === 'interest') ? 'credit' : 'debit';
-
+                // Calculate balance after
                 if ($entryType === 'credit') {
                     $balanceAfter = $balance + $amount;
                 } else {
@@ -57,26 +53,80 @@ class TransactionSeeder extends Seeder
                 // Generate transaction date (within the last 90 days)
                 $transactionDate = now()->subDays(rand(1, 90));
 
-                // Generate reference
-                $reference = $this->generateReference($transactionType);
+                // Determine if this is a transfer
+                $contraAccountId = null;
+                $externalAccountId = null;
+
+                if ($transactionType === 'transfer') {
+                    // 70% chance of internal transfer, 30% chance of external
+                    if (rand(1, 10) <= 7) {
+                        // Internal transfer - get another account from the same user
+                        $otherAccounts = $accounts->where('user_id', $user->id)->where('id', '!=', $account->id);
+                        if ($otherAccounts->count() > 0) {
+                            $contraAccountId = $otherAccounts->random()->id;
+                        }
+                    } else {
+                        // External transfer
+                        $externalAccountId = 'EXT-' . strtoupper(Str::random(8));
+                    }
+                }
+
+                // Get a random category that matches the transaction type
+                $category = $transactionCategories->random();
+
+                // Generate merchant details for payment transactions
+                $merchantName = null;
+                $merchantCategoryCode = null;
+                $merchantCategory = null;
+
+                if ($transactionType === 'payment') {
+                    $merchantName = $this->getRandomMerchant();
+                    $merchantCategoryCode = $this->getRandomMCC();
+                    $merchantCategory = $this->getMerchantCategory($merchantCategoryCode);
+                }
+
+                // Generate source and destination
+                $source = $transactionType === 'withdrawal' || $transactionType === 'transfer' || $transactionType === 'payment'
+                    ? 'account:' . $account->id
+                    : $this->getRandomSource($transactionType);
+
+                $destination = $transactionType === 'deposit' || $transactionType === 'interest'
+                    ? 'account:' . $account->id
+                    : ($contraAccountId
+                        ? 'account:' . $contraAccountId
+                        : $this->getRandomDestination($transactionType));
+
+                // Generate fee (10% chance of having a fee)
+                $fee = rand(1, 10) === 1 ? rand(100, 500) / 100 : 0.00;
 
                 // Create transaction
-                $transaction = Transaction::create([
-                    'account_id' => $account->id,
-                    'transaction_category_id' => $category->id,
-                    'transaction_group_id' => $group->id,
+                DB::table('transactions')->insert([
+                    'user_id' => $user->id,
                     'transaction_type' => $transactionType,
                     'entry_type' => $entryType,
                     'amount' => $amount,
                     'currency' => $account->currency,
-                    'balance_after' => $balanceAfter,
+                    'account_id' => $account->id,
+                    'contra_account_id' => $contraAccountId,
+                    'external_account_id' => $externalAccountId,
+                    'transaction_group_id' => $group->id,
+                    'reference_id' => $this->generateReference($transactionType),
+                    'trace_number' => 'TRN' . strtoupper(Str::random(12)),
                     'description' => $this->generateDescription($transactionType, $category->name),
-                    'reference' => $reference,
                     'status' => $this->getRandomStatus(),
+                    'category' => $category->code,
+                    'source' => $source,
+                    'destination' => $destination,
+                    'merchant_name' => $merchantName,
+                    'merchant_category_code' => $merchantCategoryCode,
+                    'merchant_category' => $merchantCategory,
+                    'fee' => $fee,
+                    'balance_after' => $balanceAfter,
                     'metadata' => json_encode([
                         'ip_address' => $this->generateRandomIP(),
                         'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
                         'location' => $this->generateRandomLocation(),
+                        'device_id' => 'DEV-' . strtoupper(Str::random(8)),
                     ]),
                     'created_at' => $transactionDate,
                     'updated_at' => $transactionDate,
@@ -88,7 +138,7 @@ class TransactionSeeder extends Seeder
             }
 
             // Update account balance to match the final transaction
-            $account->update([
+            DB::table('accounts')->where('id', $account->id)->update([
                 'balance' => $balance,
                 'available_balance' => $balance,
                 'last_activity_at' => now(),
@@ -159,8 +209,8 @@ class TransactionSeeder extends Seeder
                 'default' => ['Deposit', 'Cash Deposit', 'Check Deposit', 'Mobile Deposit'],
             ],
             'withdrawal' => [
-                'ATM Fee' => ['ATM Withdrawal Fee', 'Out-of-network ATM Fee'],
-                'default' => ['ATM Withdrawal', 'Cash Withdrawal', 'Branch Withdrawal'],
+                'ATM Transactions' => ['ATM Withdrawal', 'Cash Withdrawal', 'Branch Withdrawal'],
+                'default' => ['Withdrawal', 'Cash Withdrawal', 'Branch Withdrawal'],
             ],
             'transfer' => [
                 'Internal Transfer' => ['Transfer to Savings', 'Transfer to Checking', 'Account Transfer'],
@@ -170,14 +220,14 @@ class TransactionSeeder extends Seeder
             'payment' => [
                 'Rent' => ['Rent Payment', 'Monthly Rent', 'Housing Payment'],
                 'Mortgage' => ['Mortgage Payment', 'Home Loan Payment'],
-                'Utilities' => ['Utility Bill Payment', 'Electric Bill', 'Water Bill', 'Gas Bill'],
+                'Electricity' => ['Electric Bill', 'Utility Payment - Electric'],
+                'Water' => ['Water Bill', 'Utility Payment - Water'],
+                'Internet' => ['Internet Bill', 'ISP Payment', 'Broadband Service'],
                 'Groceries' => ['Grocery Store Purchase', 'Supermarket', 'Food Shopping'],
                 'Restaurants' => ['Restaurant Payment', 'Dining Out', 'Food Delivery'],
                 'default' => ['Bill Payment', 'Online Payment', 'Recurring Payment'],
             ],
             'fee' => [
-                'ATM Fee' => ['ATM Fee', 'ATM Service Charge'],
-                'Overdraft Fee' => ['Overdraft Fee', 'Insufficient Funds Fee'],
                 'default' => ['Monthly Service Fee', 'Account Maintenance Fee', 'Transaction Fee'],
             ],
             'interest' => [
@@ -213,9 +263,9 @@ class TransactionSeeder extends Seeder
     private function getRandomStatus(): string
     {
         $statuses = [
-            'completed' => 85,
-            'pending' => 10,
-            'failed' => 5,
+            'COMPLETED' => 85,
+            'PENDING' => 10,
+            'FAILED' => 5,
         ];
 
         $rand = rand(1, 100);
@@ -228,7 +278,7 @@ class TransactionSeeder extends Seeder
             }
         }
 
-        return 'completed'; // Default fallback
+        return 'COMPLETED'; // Default fallback
     }
 
     /**
@@ -287,6 +337,124 @@ class TransactionSeeder extends Seeder
             'San Jose' => 'CA',
         ];
 
-        return $cityStates[$city] ?? 'CA';
+        return $cityStates[$city] ?? 'Unknown';
+    }
+
+    /**
+     * Get a random merchant name
+     */
+    private function getRandomMerchant(): string
+    {
+        $merchants = [
+            'Amazon', 'Walmart', 'Target', 'Costco', 'Best Buy',
+            'Home Depot', 'Starbucks', 'McDonald\'s', 'Uber', 'Lyft',
+            'Netflix', 'Spotify', 'Apple', 'Google', 'Microsoft',
+            'Whole Foods', 'Trader Joe\'s', 'CVS Pharmacy', 'Walgreens',
+            'Shell', 'Exxon', 'Chevron', 'Delta Airlines', 'American Airlines',
+            'Marriott Hotels', 'Hilton Hotels', 'Airbnb', 'Expedia', 'Booking.com'
+        ];
+
+        return $merchants[array_rand($merchants)];
+    }
+
+    /**
+     * Get a random Merchant Category Code (MCC)
+     */
+    private function getRandomMCC(): string
+    {
+        $mccs = [
+            '5411', // Grocery Stores
+            '5812', // Restaurants
+            '5814', // Fast Food
+            '5912', // Drug Stores
+            '5541', // Gas Stations
+            '4121', // Taxis/Rideshares
+            '5311', // Department Stores
+            '5999', // Miscellaneous Retail
+            '4112', // Passenger Railways
+            '4511', // Airlines
+            '7011', // Hotels
+            '7832', // Movie Theaters
+            '5732', // Electronics Stores
+            '5942', // Bookstores
+            '8011', // Doctors
+            '8021', // Dentists
+            '8099', // Medical Services
+            '4899', // Cable/Streaming Services
+            '4814', // Telecom Services
+            '6300'  // Insurance
+        ];
+
+        return $mccs[array_rand($mccs)];
+    }
+
+    /**
+     * Get merchant category from MCC
+     */
+    private function getMerchantCategory(string $mcc): string
+    {
+        $categories = [
+            '5411' => 'Grocery',
+            '5812' => 'Dining',
+            '5814' => 'Fast Food',
+            '5912' => 'Pharmacy',
+            '5541' => 'Gas',
+            '4121' => 'Transportation',
+            '5311' => 'Retail',
+            '5999' => 'Retail',
+            '4112' => 'Transportation',
+            '4511' => 'Travel',
+            '7011' => 'Travel',
+            '7832' => 'Entertainment',
+            '5732' => 'Electronics',
+            '5942' => 'Retail',
+            '8011' => 'Healthcare',
+            '8021' => 'Healthcare',
+            '8099' => 'Healthcare',
+            '4899' => 'Subscription',
+            '4814' => 'Utilities',
+            '6300' => 'Insurance'
+        ];
+
+        return $categories[$mcc] ?? 'Other';
+    }
+
+    /**
+     * Get a random source for a transaction
+     */
+    private function getRandomSource(string $transactionType): string
+    {
+        if ($transactionType === 'deposit') {
+            $sources = [
+                'ach:employer', 'ach:external', 'wire:external',
+                'check:mobile', 'cash:branch', 'transfer:external'
+            ];
+        } elseif ($transactionType === 'interest') {
+            $sources = ['system:interest'];
+        } else {
+            $sources = ['unknown'];
+        }
+
+        return $sources[array_rand($sources)];
+    }
+
+    /**
+     * Get a random destination for a transaction
+     */
+    private function getRandomDestination(string $transactionType): string
+    {
+        if ($transactionType === 'withdrawal') {
+            $destinations = ['atm:local', 'atm:external', 'cash:branch'];
+        } elseif ($transactionType === 'payment') {
+            $destinations = ['merchant:pos', 'merchant:online', 'bill:online', 'bill:autopay'];
+        } elseif ($transactionType === 'transfer') {
+            $destinations = ['account:external', 'account:recipient'];
+        } elseif ($transactionType === 'fee') {
+            $destinations = ['system:fee'];
+        } else {
+            $destinations = ['unknown'];
+        }
+
+        return $destinations[array_rand($destinations)];
     }
 }

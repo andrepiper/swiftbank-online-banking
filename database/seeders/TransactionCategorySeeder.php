@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\TransactionCategory;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class TransactionCategorySeeder extends Seeder
 {
@@ -12,329 +12,383 @@ class TransactionCategorySeeder extends Seeder
      */
     public function run(): void
     {
-        $categories = [
+        // Define parent categories first
+        $parentCategories = [
             [
                 'name' => 'Income',
+                'code' => 'INCOME',
                 'description' => 'Money received from various sources',
-                'type' => 'credit',
-                'icon' => 'bx-dollar',
-                'color' => '#28a745',
                 'parent_id' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Salary',
-                'description' => 'Regular income from employment',
-                'type' => 'credit',
-                'icon' => 'bx-briefcase',
-                'color' => '#28a745',
-                'parent_id' => 1, // Will be set after parent is created
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Investments',
-                'description' => 'Income from investments',
-                'type' => 'credit',
-                'icon' => 'bx-line-chart',
-                'color' => '#28a745',
-                'parent_id' => 1, // Will be set after parent is created
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Gifts',
-                'description' => 'Money received as gifts',
-                'type' => 'credit',
-                'icon' => 'bx-gift',
-                'color' => '#28a745',
-                'parent_id' => 1, // Will be set after parent is created
+                'color_code' => '#28a745',
+                'icon' => 'bx-dollar',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'name' => 'Housing',
+                'code' => 'HOUSING',
                 'description' => 'Housing and accommodation expenses',
-                'type' => 'debit',
-                'icon' => 'bx-home',
-                'color' => '#dc3545',
                 'parent_id' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Rent',
-                'description' => 'Monthly rent payments',
-                'type' => 'debit',
-                'icon' => 'bx-building-house',
-                'color' => '#dc3545',
-                'parent_id' => 5, // Will be set after parent is created
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Mortgage',
-                'description' => 'Mortgage payments',
-                'type' => 'debit',
-                'icon' => 'bx-building',
-                'color' => '#dc3545',
-                'parent_id' => 5, // Will be set after parent is created
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Utilities',
-                'description' => 'Utility bills like electricity, water, gas',
-                'type' => 'debit',
-                'icon' => 'bx-plug',
-                'color' => '#dc3545',
-                'parent_id' => 5, // Will be set after parent is created
+                'color_code' => '#dc3545',
+                'icon' => 'bx-home',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'name' => 'Transportation',
+                'code' => 'TRANSPORT',
                 'description' => 'Transportation related expenses',
-                'type' => 'debit',
-                'icon' => 'bx-car',
-                'color' => '#dc3545',
                 'parent_id' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Fuel',
-                'description' => 'Gasoline and fuel expenses',
-                'type' => 'debit',
-                'icon' => 'bx-gas-pump',
-                'color' => '#dc3545',
-                'parent_id' => 9, // Will be set after parent is created
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Public Transit',
-                'description' => 'Public transportation expenses',
-                'type' => 'debit',
-                'icon' => 'bx-train',
-                'color' => '#dc3545',
-                'parent_id' => 9, // Will be set after parent is created
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Car Maintenance',
-                'description' => 'Vehicle maintenance and repairs',
-                'type' => 'debit',
-                'icon' => 'bx-wrench',
-                'color' => '#dc3545',
-                'parent_id' => 9, // Will be set after parent is created
+                'color_code' => '#fd7e14',
+                'icon' => 'bx-car',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'name' => 'Food',
+                'code' => 'FOOD',
                 'description' => 'Food and dining expenses',
-                'type' => 'debit',
-                'icon' => 'bx-food-menu',
-                'color' => '#dc3545',
                 'parent_id' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Groceries',
-                'description' => 'Grocery shopping',
-                'type' => 'debit',
-                'icon' => 'bx-cart',
-                'color' => '#dc3545',
-                'parent_id' => 13, // Will be set after parent is created
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Restaurants',
-                'description' => 'Dining out expenses',
-                'type' => 'debit',
-                'icon' => 'bx-restaurant',
-                'color' => '#dc3545',
-                'parent_id' => 13, // Will be set after parent is created
+                'color_code' => '#6f42c1',
+                'icon' => 'bx-food-menu',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'name' => 'Entertainment',
+                'code' => 'ENTERTAIN',
                 'description' => 'Entertainment and leisure expenses',
-                'type' => 'debit',
-                'icon' => 'bx-movie',
-                'color' => '#dc3545',
                 'parent_id' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Movies',
-                'description' => 'Movie tickets and streaming services',
-                'type' => 'debit',
-                'icon' => 'bx-film',
-                'color' => '#dc3545',
-                'parent_id' => 16, // Will be set after parent is created
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Travel',
-                'description' => 'Travel and vacation expenses',
-                'type' => 'debit',
-                'icon' => 'bx-plane',
-                'color' => '#dc3545',
-                'parent_id' => 16, // Will be set after parent is created
+                'color_code' => '#e83e8c',
+                'icon' => 'bx-movie',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'name' => 'Shopping',
+                'code' => 'SHOPPING',
                 'description' => 'Shopping expenses',
-                'type' => 'debit',
-                'icon' => 'bx-shopping-bag',
-                'color' => '#dc3545',
                 'parent_id' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Clothing',
-                'description' => 'Clothing and apparel purchases',
-                'type' => 'debit',
-                'icon' => 'bx-closet',
-                'color' => '#dc3545',
-                'parent_id' => 19, // Will be set after parent is created
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Electronics',
-                'description' => 'Electronic devices and gadgets',
-                'type' => 'debit',
-                'icon' => 'bx-laptop',
-                'color' => '#dc3545',
-                'parent_id' => 19, // Will be set after parent is created
+                'color_code' => '#20c997',
+                'icon' => 'bx-shopping-bag',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'name' => 'Health',
+                'code' => 'HEALTH',
                 'description' => 'Health and medical expenses',
-                'type' => 'debit',
+                'parent_id' => null,
+                'color_code' => '#17a2b8',
                 'icon' => 'bx-plus-medical',
-                'color' => '#dc3545',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Education',
+                'code' => 'EDUCATION',
+                'description' => 'Education and learning expenses',
                 'parent_id' => null,
+                'color_code' => '#007bff',
+                'icon' => 'bx-book',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'name' => 'Doctor',
-                'description' => 'Doctor visits and consultations',
-                'type' => 'debit',
-                'icon' => 'bx-first-aid',
-                'color' => '#dc3545',
-                'parent_id' => 22, // Will be set after parent is created
+                'name' => 'Bills & Utilities',
+                'code' => 'BILLS',
+                'description' => 'Regular bills and utility payments',
+                'parent_id' => null,
+                'color_code' => '#6c757d',
+                'icon' => 'bx-receipt',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'name' => 'Pharmacy',
-                'description' => 'Medication and pharmacy expenses',
-                'type' => 'debit',
-                'icon' => 'bx-capsule',
-                'color' => '#dc3545',
-                'parent_id' => 22, // Will be set after parent is created
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Transfer',
-                'description' => 'Transfers between accounts',
-                'type' => 'transfer',
+                'name' => 'Transfers',
+                'code' => 'TRANSFER',
+                'description' => 'Money transfers between accounts',
+                'parent_id' => null,
+                'color_code' => '#ffc107',
                 'icon' => 'bx-transfer',
-                'color' => '#17a2b8',
-                'parent_id' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Internal Transfer',
-                'description' => 'Transfers between own accounts',
-                'type' => 'transfer',
-                'icon' => 'bx-transfer-alt',
-                'color' => '#17a2b8',
-                'parent_id' => 25, // Will be set after parent is created
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'External Transfer',
-                'description' => 'Transfers to external accounts',
-                'type' => 'transfer',
-                'icon' => 'bx-export',
-                'color' => '#17a2b8',
-                'parent_id' => 25, // Will be set after parent is created
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Fees',
-                'description' => 'Bank fees and charges',
-                'type' => 'debit',
-                'icon' => 'bx-money-withdraw',
-                'color' => '#dc3545',
-                'parent_id' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'ATM Fee',
-                'description' => 'ATM withdrawal fees',
-                'type' => 'debit',
-                'icon' => 'bx-credit-card-front',
-                'color' => '#dc3545',
-                'parent_id' => 28, // Will be set after parent is created
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Overdraft Fee',
-                'description' => 'Overdraft charges',
-                'type' => 'debit',
-                'icon' => 'bx-error',
-                'color' => '#dc3545',
-                'parent_id' => 28, // Will be set after parent is created
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
         ];
 
-        // First pass: create all categories without parent relationships
-        foreach ($categories as $index => $category) {
-            $parentId = $category['parent_id'];
-            $category['parent_id'] = null;
-
-            $createdCategory = TransactionCategory::create($category);
-
-            // Store the created ID for the second pass
-            $categories[$index]['created_id'] = $createdCategory->id;
+        // Insert parent categories
+        foreach ($parentCategories as $category) {
+            DB::table('transaction_categories')->insert($category);
         }
 
-        // Second pass: update parent relationships
-        foreach ($categories as $category) {
-            if ($category['parent_id'] !== null) {
-                $parentIndex = $category['parent_id'] - 1; // Adjust for 0-based index
-                $parentId = $categories[$parentIndex]['created_id'];
+        // Get the IDs of the parent categories
+        $incomeId = DB::table('transaction_categories')->where('code', 'INCOME')->value('id');
+        $housingId = DB::table('transaction_categories')->where('code', 'HOUSING')->value('id');
+        $transportId = DB::table('transaction_categories')->where('code', 'TRANSPORT')->value('id');
+        $foodId = DB::table('transaction_categories')->where('code', 'FOOD')->value('id');
+        $entertainmentId = DB::table('transaction_categories')->where('code', 'ENTERTAIN')->value('id');
+        $shoppingId = DB::table('transaction_categories')->where('code', 'SHOPPING')->value('id');
+        $healthId = DB::table('transaction_categories')->where('code', 'HEALTH')->value('id');
+        $educationId = DB::table('transaction_categories')->where('code', 'EDUCATION')->value('id');
+        $billsId = DB::table('transaction_categories')->where('code', 'BILLS')->value('id');
+        $transferId = DB::table('transaction_categories')->where('code', 'TRANSFER')->value('id');
 
-                TransactionCategory::where('id', $category['created_id'])
-                    ->update(['parent_id' => $parentId]);
-            }
+        // Define subcategories
+        $subCategories = [
+            // Income subcategories
+            [
+                'name' => 'Salary',
+                'code' => 'SALARY',
+                'description' => 'Regular income from employment',
+                'parent_id' => $incomeId,
+                'color_code' => '#28a745',
+                'icon' => 'bx-briefcase',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Investments',
+                'code' => 'INVEST',
+                'description' => 'Income from investments',
+                'parent_id' => $incomeId,
+                'color_code' => '#28a745',
+                'icon' => 'bx-line-chart',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Gifts',
+                'code' => 'GIFT',
+                'description' => 'Money received as gifts',
+                'parent_id' => $incomeId,
+                'color_code' => '#28a745',
+                'icon' => 'bx-gift',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+
+            // Housing subcategories
+            [
+                'name' => 'Rent',
+                'code' => 'RENT',
+                'description' => 'Monthly rent payments',
+                'parent_id' => $housingId,
+                'color_code' => '#dc3545',
+                'icon' => 'bx-building-house',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Mortgage',
+                'code' => 'MORTGAGE',
+                'description' => 'Mortgage payments',
+                'parent_id' => $housingId,
+                'color_code' => '#dc3545',
+                'icon' => 'bx-building',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+
+            // Transportation subcategories
+            [
+                'name' => 'Fuel',
+                'code' => 'FUEL',
+                'description' => 'Gasoline and fuel expenses',
+                'parent_id' => $transportId,
+                'color_code' => '#fd7e14',
+                'icon' => 'bx-gas-pump',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Public Transit',
+                'code' => 'TRANSIT',
+                'description' => 'Public transportation expenses',
+                'parent_id' => $transportId,
+                'color_code' => '#fd7e14',
+                'icon' => 'bx-train',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Car Maintenance',
+                'code' => 'CAR_MAINT',
+                'description' => 'Vehicle maintenance and repairs',
+                'parent_id' => $transportId,
+                'color_code' => '#fd7e14',
+                'icon' => 'bx-wrench',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+
+            // Food subcategories
+            [
+                'name' => 'Groceries',
+                'code' => 'GROCERY',
+                'description' => 'Grocery shopping',
+                'parent_id' => $foodId,
+                'color_code' => '#6f42c1',
+                'icon' => 'bx-cart',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Restaurants',
+                'code' => 'DINING',
+                'description' => 'Dining out expenses',
+                'parent_id' => $foodId,
+                'color_code' => '#6f42c1',
+                'icon' => 'bx-restaurant',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+
+            // Entertainment subcategories
+            [
+                'name' => 'Movies',
+                'code' => 'MOVIES',
+                'description' => 'Movie tickets and streaming services',
+                'parent_id' => $entertainmentId,
+                'color_code' => '#e83e8c',
+                'icon' => 'bx-film',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Travel',
+                'code' => 'TRAVEL',
+                'description' => 'Travel and vacation expenses',
+                'parent_id' => $entertainmentId,
+                'color_code' => '#e83e8c',
+                'icon' => 'bx-plane',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+
+            // Shopping subcategories
+            [
+                'name' => 'Clothing',
+                'code' => 'CLOTHING',
+                'description' => 'Clothing and apparel purchases',
+                'parent_id' => $shoppingId,
+                'color_code' => '#20c997',
+                'icon' => 'bx-closet',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Electronics',
+                'code' => 'ELECTRON',
+                'description' => 'Electronic devices and gadgets',
+                'parent_id' => $shoppingId,
+                'color_code' => '#20c997',
+                'icon' => 'bx-laptop',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+
+            // Health subcategories
+            [
+                'name' => 'Doctor',
+                'code' => 'DOCTOR',
+                'description' => 'Doctor visits and consultations',
+                'parent_id' => $healthId,
+                'color_code' => '#17a2b8',
+                'icon' => 'bx-first-aid',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Pharmacy',
+                'code' => 'PHARMACY',
+                'description' => 'Medication and pharmacy expenses',
+                'parent_id' => $healthId,
+                'color_code' => '#17a2b8',
+                'icon' => 'bx-capsule',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+
+            // Education subcategories
+            [
+                'name' => 'Tuition',
+                'code' => 'TUITION',
+                'description' => 'School and college tuition fees',
+                'parent_id' => $educationId,
+                'color_code' => '#007bff',
+                'icon' => 'bx-graduation',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Books',
+                'code' => 'BOOKS',
+                'description' => 'Books and educational materials',
+                'parent_id' => $educationId,
+                'color_code' => '#007bff',
+                'icon' => 'bx-book-open',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+
+            // Bills & Utilities subcategories
+            [
+                'name' => 'Electricity',
+                'code' => 'ELECTRIC',
+                'description' => 'Electricity bills',
+                'parent_id' => $billsId,
+                'color_code' => '#6c757d',
+                'icon' => 'bx-bulb',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Water',
+                'code' => 'WATER',
+                'description' => 'Water bills',
+                'parent_id' => $billsId,
+                'color_code' => '#6c757d',
+                'icon' => 'bx-droplet',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Internet',
+                'code' => 'INTERNET',
+                'description' => 'Internet and broadband bills',
+                'parent_id' => $billsId,
+                'color_code' => '#6c757d',
+                'icon' => 'bx-wifi',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+
+            // Transfer subcategories
+            [
+                'name' => 'Internal Transfer',
+                'code' => 'INT_TRANS',
+                'description' => 'Transfers between own accounts',
+                'parent_id' => $transferId,
+                'color_code' => '#ffc107',
+                'icon' => 'bx-transfer-alt',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'External Transfer',
+                'code' => 'EXT_TRANS',
+                'description' => 'Transfers to external accounts',
+                'parent_id' => $transferId,
+                'color_code' => '#ffc107',
+                'icon' => 'bx-send',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ];
+
+        // Insert subcategories
+        foreach ($subCategories as $category) {
+            DB::table('transaction_categories')->insert($category);
         }
     }
 }

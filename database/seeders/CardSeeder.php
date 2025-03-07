@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\Account;
-use App\Models\Card;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 
 class CardSeeder extends Seeder
 {
@@ -15,18 +15,16 @@ class CardSeeder extends Seeder
     public function run(): void
     {
         // Get all checking accounts
-        $accounts = Account::whereHas('accountType', function ($query) {
-            $query->where('name', 'like', '%Checking%');
-        })->get();
+        $accounts = DB::table('accounts')
+            ->join('account_types', 'accounts.account_type_id', '=', 'account_types.id')
+            ->where('account_types.name', 'like', '%Checking%')
+            ->select('accounts.*')
+            ->get();
 
         if ($accounts->isEmpty()) {
             // Fallback to all accounts if no checking accounts found
-            $accounts = Account::all();
+            $accounts = DB::table('accounts')->get();
         }
-
-        // Card types and networks
-        $cardTypes = ['debit', 'credit'];
-        $cardNetworks = ['visa', 'mastercard', 'amex', 'discover'];
 
         // Each account gets 1-2 cards
         foreach ($accounts as $account) {
@@ -34,43 +32,88 @@ class CardSeeder extends Seeder
 
             for ($i = 0; $i < $numCards; $i++) {
                 // Determine card type and network
-                $cardType = $cardTypes[array_rand($cardTypes)];
-                $cardNetwork = $cardNetworks[array_rand($cardNetworks)];
+                $cardType = $this->getRandomCardType();
+                $cardNetwork = $this->getRandomCardNetwork();
 
                 // Generate card details
                 $cardNumber = $this->generateCardNumber($cardNetwork);
-                $expiryDate = now()->addYears(rand(1, 5))->format('m/Y');
+                $expiryMonth = rand(1, 12);
+                $expiryYear = date('Y') + rand(1, 5);
                 $cvv = $this->generateCVV($cardNetwork);
+                $pinHash = Hash::make(str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT));
+
+                // Get user name
+                $user = DB::table('users')->where('id', $account->user_id)->first();
+                $cardholderName = $user->firstname . ' ' . $user->lastname;
+
+                // Activation date
+                $activationDate = now()->subDays(rand(1, 360));
 
                 // Create card
-                Card::create([
+                DB::table('cards')->insert([
                     'user_id' => $account->user_id,
                     'account_id' => $account->id,
+                    'card_number' => $cardNumber,
                     'card_type' => $cardType,
                     'card_network' => $cardNetwork,
-                    'card_number' => $cardNumber,
-                    'masked_number' => $this->maskCardNumber($cardNumber),
-                    'cardholder_name' => $account->user->name,
-                    'expiry_date' => $expiryDate,
+                    'cardholder_name' => $cardholderName,
+                    'expiry_month' => $expiryMonth,
+                    'expiry_year' => $expiryYear,
                     'cvv' => $cvv,
-                    'status' => $this->getRandomStatus(),
-                    'is_virtual' => rand(0, 10) > 8,
-                    'is_contactless' => rand(0, 10) > 2,
+                    'pin_hash' => $pinHash,
                     'daily_limit' => $this->getDailyLimit($cardType),
                     'monthly_limit' => $this->getMonthlyLimit($cardType),
-                    'metadata' => json_encode([
-                        'design' => $this->getRandomCardDesign(),
-                        'pin_set' => true,
-                        'international_enabled' => rand(0, 1) ? true : false,
-                        'online_transactions_enabled' => rand(0, 1) ? true : false,
-                        'atm_withdrawals_enabled' => rand(0, 1) ? true : false,
-                    ]),
-                    'created_at' => now()->subDays(rand(1, 365)),
+                    'is_virtual' => rand(0, 10) > 8 ? 1 : 0,
+                    'is_contactless' => rand(0, 10) > 2 ? 1 : 0,
+                    'status' => $this->getRandomStatus(),
+                    'activation_date' => $activationDate,
+                    'created_at' => $activationDate->subDays(rand(1, 5)),
                     'updated_at' => now(),
-                    'activated_at' => now()->subDays(rand(1, 360)),
                 ]);
             }
         }
+    }
+
+    /**
+     * Get a random card type
+     */
+    private function getRandomCardType(): string
+    {
+        $types = ['DEBIT', 'CREDIT', 'PREPAID'];
+        $weights = [60, 30, 10]; // 60% debit, 30% credit, 10% prepaid
+
+        $rand = rand(1, 100);
+        $cumulative = 0;
+
+        foreach ($types as $index => $type) {
+            $cumulative += $weights[$index];
+            if ($rand <= $cumulative) {
+                return $type;
+            }
+        }
+
+        return 'DEBIT'; // Default fallback
+    }
+
+    /**
+     * Get a random card network
+     */
+    private function getRandomCardNetwork(): string
+    {
+        $networks = ['VISA', 'MASTERCARD', 'AMEX', 'DISCOVER'];
+        $weights = [40, 40, 10, 10]; // 40% Visa, 40% Mastercard, 10% Amex, 10% Discover
+
+        $rand = rand(1, 100);
+        $cumulative = 0;
+
+        foreach ($networks as $index => $network) {
+            $cumulative += $weights[$index];
+            if ($rand <= $cumulative) {
+                return $network;
+            }
+        }
+
+        return 'VISA'; // Default fallback
     }
 
     /**
@@ -79,19 +122,19 @@ class CardSeeder extends Seeder
     private function generateCardNumber(string $network): string
     {
         switch ($network) {
-            case 'visa':
+            case 'VISA':
                 $prefix = '4';
                 $length = 16;
                 break;
-            case 'mastercard':
+            case 'MASTERCARD':
                 $prefix = (string) rand(51, 55);
                 $length = 16;
                 break;
-            case 'amex':
+            case 'AMEX':
                 $prefix = rand(0, 1) ? '34' : '37';
                 $length = 15;
                 break;
-            case 'discover':
+            case 'DISCOVER':
                 $prefix = '6011';
                 $length = 16;
                 break;
@@ -116,7 +159,7 @@ class CardSeeder extends Seeder
      */
     private function generateCVV(string $network): string
     {
-        $length = ($network === 'amex') ? 4 : 3;
+        $length = ($network === 'AMEX') ? 4 : 3;
         $cvv = '';
 
         for ($i = 0; $i < $length; $i++) {
@@ -127,40 +170,24 @@ class CardSeeder extends Seeder
     }
 
     /**
-     * Mask card number for display
-     */
-    private function maskCardNumber(string $cardNumber): string
-    {
-        $length = strlen($cardNumber);
-        $visibleCount = 4;
-        $maskedSection = str_repeat('*', $length - $visibleCount);
-        $visiblePart = substr($cardNumber, -$visibleCount);
-
-        return $maskedSection . $visiblePart;
-    }
-
-    /**
      * Get a random card status
      */
     private function getRandomStatus(): string
     {
-        $statuses = [
-            'active' => 85,
-            'inactive' => 10,
-            'blocked' => 5,
-        ];
+        $statuses = ['ACTIVE', 'INACTIVE', 'BLOCKED', 'EXPIRED'];
+        $weights = [85, 5, 5, 5]; // 85% active, 5% inactive, 5% blocked, 5% expired
 
         $rand = rand(1, 100);
         $cumulative = 0;
 
-        foreach ($statuses as $status => $probability) {
-            $cumulative += $probability;
+        foreach ($statuses as $index => $status) {
+            $cumulative += $weights[$index];
             if ($rand <= $cumulative) {
                 return $status;
             }
         }
 
-        return 'active'; // Default fallback
+        return 'ACTIVE'; // Default fallback
     }
 
     /**
@@ -168,8 +195,10 @@ class CardSeeder extends Seeder
      */
     private function getDailyLimit(string $cardType): float
     {
-        if ($cardType === 'credit') {
+        if ($cardType === 'CREDIT') {
             return rand(1000, 5000);
+        } elseif ($cardType === 'PREPAID') {
+            return rand(200, 1000);
         } else {
             return rand(500, 2000);
         }
@@ -180,19 +209,12 @@ class CardSeeder extends Seeder
      */
     private function getMonthlyLimit(string $cardType): float
     {
-        if ($cardType === 'credit') {
+        if ($cardType === 'CREDIT') {
             return rand(5000, 20000);
+        } elseif ($cardType === 'PREPAID') {
+            return rand(1000, 5000);
         } else {
             return rand(2000, 10000);
         }
-    }
-
-    /**
-     * Get a random card design
-     */
-    private function getRandomCardDesign(): string
-    {
-        $designs = ['standard', 'premium', 'metal', 'custom', 'limited_edition'];
-        return $designs[array_rand($designs)];
     }
 }
